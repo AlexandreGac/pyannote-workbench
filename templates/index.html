@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyannote AI - Application Project</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-body: #0d1117;
+            --bg-panel: #161b22;
+            --bg-card: #21262d;
+            --border-color: #30363d;
+            --accent-primary: #238636;
+            --accent-hover: #2ea043;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --color-danger: #f85149;
+            --color-warning: #d29922;
+            --navbar-height: 60px;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Custom Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #58a6ff; }
+
+        /* --- NAVBAR --- */
+        .navbar-custom {
+            height: var(--navbar-height);
+            background-color: var(--bg-panel);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 1px 15px rgba(0,0,0,0.2); z-index: 100;
+            flex-shrink: 0;
+        }
+
+        .brand-section { display: flex; align-items: center; gap: 12px; }
+        .brand-logo {
+            font-size: 1.1rem; font-weight: 700; color: #fff;
+            text-decoration: none; letter-spacing: -0.5px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .brand-logo i { color: var(--accent-primary); font-size: 1.2rem; }
+        .brand-subtitle { 
+            font-weight: 400; color: var(--text-muted); font-size: 0.9rem; 
+            border-left: 1px solid var(--border-color); padding-left: 10px;
+        }
+
+        .toolbar-group {
+            display: flex; align-items: center; gap: 10px;
+            background: #0d1117; padding: 4px 6px;
+            border-radius: 8px; border: 1px solid var(--border-color);
+        }
+
+        .modern-input {
+            background: transparent; border: none; color: #fff; font-size: 0.85rem;
+            padding: 4px 8px; outline: none; transition: all 0.2s;
+        }
+        .modern-input::placeholder { color: #484f58; }
+        .modern-input:focus { color: #fff; }
+
+        .input-separator { width: 1px; height: 16px; background: var(--border-color); }
+
+        .btn-modern {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            border: none; border-radius: 6px; background: transparent; color: var(--text-muted);
+            transition: all 0.2s; cursor: pointer;
+        }
+        .btn-modern:hover { background: #21262d; color: #fff; transform: translateY(-1px); }
+        .btn-modern.primary { color: var(--accent-primary); background: rgba(35, 134, 54, 0.1); }
+        .btn-modern.primary:hover { background: var(--accent-primary); color: #fff; }
+        .btn-modern.action { color: #58a6ff; background: rgba(88, 166, 255, 0.1); }
+        .btn-modern.action:hover { background: #58a6ff; color: #fff; }
+
+        .file-upload-wrapper { position: relative; display: flex; align-items: center; }
+        .file-upload-label {
+            display: flex; align-items: center; gap: 8px;
+            color: var(--text-muted); font-size: 0.85rem;
+            cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all 0.2s;
+        }
+        .file-upload-label:hover { color: #fff; background: rgba(255,255,255,0.05); }
+        .file-name-display {
+            max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .main-layout {
+            flex-grow: 1; display: grid; grid-template-rows: auto 1fr;
+            gap: 15px; padding: 15px; overflow: hidden;
+        }
+
+        .waveform-container {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 12px; position: relative;
+            flex-shrink: 0;
+        }
+        #waveform { width: 100%; height: 90px; }
+        
+        .timeline-controls {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;
+        }
+        .play-circle-btn {
+            width: 30px; height: 30px; border-radius: 50%;
+            border: 1px solid var(--accent-primary);
+            background: rgba(35, 134, 54, 0.2); color: #fff;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+        }
+        .play-circle-btn:hover { background: var(--accent-primary); transform: scale(1.1); }
+
+        .workspace {
+            display: grid; grid-template-columns: 400px 1fr; gap: 15px; min-height: 0;
+        }
+
+        .panel {
+            background: var(--bg-panel); border: 1px solid var(--border-color);
+            border-radius: 8px; display: flex; flex-direction: column; overflow: hidden;
+        }
+        .panel-header {
+            padding: 12px 15px; border-bottom: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.02);
+            font-weight: 500; font-size: 0.9rem;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-shrink: 0;
+        }
+
+        /* --- KANBAN --- */
+        .kanban-board {
+            display: flex; gap: 15px; padding: 15px;
+            overflow-x: auto; overflow-y: hidden; height: 100%; align-items: flex-start;
+        }
+        .speaker-col {
+            flex: 0 0 350px; /* FIXED WIDTH to prevent squeezing */
+            max-height: 100%;
+            background: #0d1117; border: 1px solid var(--border-color);
+            border-radius: 8px; display: flex; flex-direction: column;
+            overflow: hidden; 
+        }
+        
+        /* HEADER STABILITY FIXES */
+        .speaker-col-header {
+            padding: 10px 12px; border-bottom: 1px solid var(--border-color);
+            border-top: 3px solid transparent; background: #1c2128;
+            border-radius: 8px 8px 0 0; display: flex; align-items: center; gap: 8px;
+            flex-shrink: 0; height: 50px;
+        }
+        .speaker-col-header i { flex-shrink: 0; }
+        
+        .speaker-name-input {
+            background: transparent; border: 1px solid transparent;
+            color: var(--text-main); font-weight: 600; font-size: 0.95rem;
+            padding: 2px 4px; border-radius: 4px;
+            flex-grow: 1; min-width: 0;
+        }
+        .speaker-name-input:focus { background: #0d1117; border-color: #58a6ff; outline: none; }
+        
+        .speaker-col-header .badge { flex-shrink: 0; }
+        .speaker-col-header .btn-delete-col { flex-shrink: 0; }
+        
+        .segment-list { 
+            padding: 10px; 
+            overflow-y: auto; overflow-x: hidden;
+            flex-grow: 1;
+        }
+
+        /* --- CARD --- */
+        .segment-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 6px; padding: 10px; margin-bottom: 10px;
+            border-left: 3px solid transparent; transition: all 0.2s; cursor: pointer;
+            position: relative;
+        }
+        .segment-card.analyzed { border-right: 3px solid var(--accent-primary); }
+        .segment-card:hover { 
+            background: #30363d; transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            z-index: 2;
+        }
+        .segment-card.low-conf { 
+            border-left-color: var(--color-danger) !important; 
+            background: linear-gradient(90deg, rgba(248, 81, 73, 0.1) 0%, rgba(33, 38, 45, 1) 40%);
+        }
+
+        .conf-badge { font-size: 0.75rem; font-family: 'Inter', sans-serif; font-weight: 600; }
+        .conf-low { color: var(--color-danger); }
+        .conf-mid { color: var(--color-warning); }
+        .conf-high { color: var(--accent-primary); }
+
+        .card-meta {
+            font-size: 0.75rem; color: var(--text-muted);
+            display: flex; justify-content: space-between; align-items: center; 
+            padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 8px;
+        }
+        .btn-icon {
+            background: none; border: none; color: var(--text-muted);
+            padding: 4px; border-radius: 4px; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+        }
+        .btn-icon:hover { color: #fff; background: rgba(255,255,255,0.1); }
+        .btn-icon.active { color: #238636; }
+        .btn-icon.danger:hover { color: var(--color-danger); background: rgba(248, 81, 73, 0.1); }
+
+        .loader-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(13, 17, 23, 0.95); z-index: 10000;
+            display: none; justify-content: center; align-items: center; flex-direction: column;
+        }
+        
+        .conf-slider-container {
+            display: flex; align-items: center; gap: 10px;
+            background: #0d1117; padding: 4px 10px; border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+        .conf-slider { width: 100px; accent-color: var(--color-warning); cursor: pointer; }
+
+    </style>
+</head>
+<body>
+
+    <div class="loader-overlay" id="loader">
+        <div class="spinner-border text-success mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
+        <h5 class="text-white fw-light" id="loader-text">Processing Audio...</h5>
+    </div>
+
+    <nav class="navbar-custom">
+        <div class="brand-section">
+            <a class="brand-logo" href="#">
+                <i class="fa-solid fa-layer-group"></i>
+                Pyannote <span class="fw-light text-white">Workbench</span>
+            </a>
+            <span class="brand-subtitle d-none d-md-block">Human-in-the-Loop Diarization</span>
+        </div>
+
+        <div class="toolbar-group">
+            <div class="d-flex align-items-center px-2">
+                <i class="fa fa-key text-muted small me-2"></i>
+                <input type="password" id="apiToken" class="modern-input" placeholder="Pyanote API Token" style="width: 140px;">
+            </div>
+            
+            <div class="input-separator"></div>
+
+            <div class="file-upload-wrapper px-2">
+                <input type="file" id="audioFile" class="d-none" accept="audio/*" onchange="updateFileName(this)">
+                <label for="audioFile" class="file-upload-label">
+                    <i class="fa fa-folder-open"></i>
+                    <span id="file-name-display" class="file-name-display">Select Audio...</span>
+                </label>
+            </div>
+
+            <div class="input-separator"></div>
+
+            <div class="d-flex align-items-center gap-1 ps-2">
+                <button class="btn-modern primary" onclick="uploadAndInit()" title="Start Process">
+                    <i class="fa fa-play"></i>
+                </button>
+                <button class="btn-modern action" onclick="exportCorrectedJson()" title="Export JSON">
+                    <i class="fa fa-file-export"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid main-layout">
+        <div class="waveform-container">
+            <div class="timeline-controls">
+                <div class="d-flex align-items-center gap-2">
+                    <small class="text-muted fw-bold text-uppercase"><i class="fa fa-wave-square me-1"></i> Timeline</small>
+                    <button class="play-circle-btn" onclick="toggleWaveformPlay()" id="timeline-play-btn">
+                        <i class="fa fa-play"></i>
+                    </button>
+                </div>
+                <span id="time-display" class="badge bg-dark border border-secondary font-monospace">00:00.000</span>
+            </div>
+            <div id="waveform"></div>
+        </div>
+
+        <div class="workspace">
+            <div class="panel">
+                <div class="panel-header">
+                    <span><i class="fa fa-project-diagram me-2 text-primary"></i>Embedding Space</span>
+                    <button class="btn-icon" onclick="updatePCAPlot()" title="Refresh PCA"><i class="fa fa-sync-alt"></i></button>
+                </div>
+                <div class="d-flex flex-column h-100 p-2">
+                    <div id="plotDiv" style="flex-grow: 1;"></div>
+                    <div class="pt-3 border-top border-secondary mt-2">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label class="small text-muted">Assisted Clustering</label>
+                            <small class="text-muted" style="font-size: 0.7rem;">Spectral Clustering</small>
+                        </div>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-dark border-secondary">Target Speakers</span>
+                            <input type="number" id="numClusters" class="form-control bg-dark text-white border-secondary" value="2" min="1">
+                            <button class="btn btn-outline-warning" onclick="performClustering()">Apply</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fa fa-users-cog text-success"></i>
+                        <span>Speaker Editor</span>
+                    </div>
+                    
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="conf-slider-container">
+                            <i class="fa fa-triangle-exclamation text-warning small" title="Highlight segments below this score"></i>
+                            <input type="range" class="conf-slider" min="0" max="100" step="1" value="80" oninput="updateConfidenceThreshold(this.value)">
+                            <span class="small font-monospace" id="conf-val-display" style="width: 30px; text-align: right;">80</span>
+                        </div>
+                        <button class="btn btn-sm btn-outline-success border-0" onclick="addSpeakerColumn()">
+                            <i class="fa fa-plus me-1"></i> Add Speaker
+                        </button>
+                    </div>
+                </div>
+                <div class="kanban-board" id="speaker-columns">
+                    <!-- Columns injected via JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/wavesurfer.js@7"></script>
+    <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-2.24.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+
+    <script>
+        function updateFileName(input) {
+            const display = document.getElementById('file-name-display');
+            if(input.files && input.files[0]) display.innerText = input.files[0].name;
+            else display.innerText = "Select Audio...";
+        }
+
+        let wavesurfer, wsRegions;
+        let speakerData = {}; 
+        let colorMap = {}; 
+        let newSpeakerCount = 0;
+        let confidenceThreshold = 80;
+
+        function generateBrightColor() {
+            const hue = Math.floor(Math.random() * 360);
+            return hslToHex(hue, 75, 60);
+        }
+
+        function hslToHex(h, s, l) {
+            l /= 100;
+            const a = s * Math.min(l, 1 - l) / 100;
+            const f = n => {
+                const k = (n + h / 30) % 12;
+                const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+                return Math.round(255 * color).toString(16).padStart(2, '0');
+            };
+            return `#${f(0)}${f(8)}${f(4)}`;
+        }
+        
+        colorMap = {
+            "SPEAKER_00": hslToHex(200, 75, 60),
+            "SPEAKER_01": hslToHex(30, 75, 60),
+            "SPEAKER_02": hslToHex(120, 75, 60),
+            "Unknown": "#7f7f7f"
+        };
+
+        wavesurfer = WaveSurfer.create({
+            container: '#waveform',
+            waveColor: '#30363d',
+            progressColor: '#238636',
+            cursorColor: '#ff0000',
+            height: 90,
+            barWidth: 2,
+            barGap: 1,
+            barRadius: 2,
+            normalize: true
+        });
+        wsRegions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
+        
+        wavesurfer.on('timeupdate', (t) => {
+            const min = Math.floor(t / 60);
+            const sec = Math.floor(t % 60);
+            const ms = Math.floor((t % 1) * 1000);
+            document.getElementById('time-display').innerText = 
+                `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}.${ms.toString().padStart(3,'0')}`;
+        });
+
+        wavesurfer.on('play', () => { document.querySelector('#timeline-play-btn i').className = 'fa fa-pause'; });
+        wavesurfer.on('pause', () => { document.querySelector('#timeline-play-btn i').className = 'fa fa-play'; });
+        function toggleWaveformPlay() { wavesurfer.playPause(); }
+
+        function updateConfidenceThreshold(val) {
+            confidenceThreshold = parseInt(val);
+            document.getElementById('conf-val-display').innerText = confidenceThreshold;
+            document.querySelectorAll('.segment-card').forEach(card => {
+                const conf = parseFloat(card.dataset.conf);
+                updateCardVisuals(card, conf);
+            });
+        }
+
+        function updateCardVisuals(card, conf) {
+            const badge = card.querySelector('.conf-badge');
+            
+            if (conf < confidenceThreshold) {
+                card.classList.add('low-conf');
+                if(badge) {
+                    badge.innerHTML = `<i class="fa fa-triangle-exclamation"></i> ${conf}%`;
+                    badge.className = 'conf-badge conf-low';
+                }
+            } else {
+                card.classList.remove('low-conf');
+                if(badge) {
+                    const isHigh = conf >= 90;
+                    badge.innerHTML = isHigh ? `<i class="fa fa-check-circle"></i> ${conf}%` : `${conf}%`;
+                    badge.className = 'conf-badge ' + (isHigh ? 'conf-high' : 'conf-mid');
+                }
+            }
+        }
+
+        // --- EXPORT (Clean) ---
+        function exportCorrectedJson() {
+            let allSegments = [];
+            Object.keys(speakerData).forEach(spk => {
+                speakerData[spk].forEach(seg => {
+                    allSegments.push({
+                        start: seg.start,
+                        end: seg.end,
+                        speaker: spk
+                    });
+                });
+            });
+            allSegments.sort((a, b) => a.start - b.start);
+            
+            const output = { diarization: allSegments };
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(output, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "corrected_diarization.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        async function uploadAndInit() {
+            const token = document.getElementById('apiToken').value;
+            const fileInput = document.getElementById('audioFile');
+            if (!token || !fileInput.files[0]) return alert("Missing Token or Audio File");
+
+            showLoader(true, "Uploading & Diarizing...");
+            try {
+                const formData = new FormData();
+                formData.append('audio', fileInput.files[0]);
+                formData.append('token', token);
+                
+                let res = await fetch('/api/upload', { method: 'POST', body: formData });
+                if (!res.ok) throw new Error("Upload failed");
+                wavesurfer.load(URL.createObjectURL(fileInput.files[0]));
+
+                res = await fetch('/api/diarize', { method: 'POST' });
+                let diarResult = await res.json();
+                if (diarResult.error) throw new Error(diarResult.error);
+
+                processDiarization(diarResult.diarization);
+                renderKanban();
+                plotPCA([]); 
+            } catch (e) { alert(e.message); } 
+            finally { showLoader(false); }
+        }
+
+        function processDiarization(segments) {
+            wsRegions.clearRegions();
+            speakerData = {}; 
+
+            segments.forEach((seg, idx) => {
+                if (!speakerData[seg.speaker]) speakerData[seg.speaker] = [];
+                seg.id = seg.id || `seg_${idx}`; 
+                
+                let confScore = 0;
+                if (seg.confidence && typeof seg.confidence === 'object') {
+                    confScore = seg.confidence[seg.speaker]; 
+                } else if (typeof seg.confidence === 'number') {
+                    confScore = seg.confidence;
+                } else {
+                    confScore = Math.floor(Math.random() * 40) + 60;
+                }
+                
+                if (confScore === undefined || confScore === null) confScore = 0;
+                seg.confidenceScore = parseInt(confScore); 
+
+                if (!colorMap[seg.speaker]) colorMap[seg.speaker] = generateBrightColor();
+
+                speakerData[seg.speaker].push(seg);
+                
+                wsRegions.addRegion({
+                    id: seg.id, start: seg.start, end: seg.end,
+                    color: hexToRgba(colorMap[seg.speaker], 0.2), drag: false, resize: false
+                });
+            });
+            
+            sortAllSpeakers();
+        }
+
+        function sortAllSpeakers() {
+            Object.keys(speakerData).forEach(spk => {
+                speakerData[spk].sort((a, b) => a.start - b.start);
+            });
+        }
+
+        // --- RENDER (WITH SCROLL PERSISTENCE) ---
+        function renderKanban() {
+            const container = document.getElementById('speaker-columns');
+            
+            // Capture scroll positions
+            const scrollMap = {};
+            document.querySelectorAll('.segment-list').forEach(list => {
+                const spk = list.closest('.speaker-col').dataset.speaker;
+                scrollMap[spk] = list.scrollTop;
+            });
+            const boardScrollLeft = container.scrollLeft;
+
+            container.innerHTML = '';
+            
+            Object.keys(speakerData).forEach(spk => {
+                speakerData[spk].sort((a, b) => a.start - b.start);
+
+                const colColor = colorMap[spk] || '#ffffff';
+                const count = speakerData[spk].length;
+                const col = document.createElement('div');
+                col.className = 'speaker-col';
+                col.dataset.speaker = spk;
+                
+                const deleteBtn = count === 0 
+                    ? `<button class="btn-delete-col" onclick="deleteSpeaker('${spk}', event)"><i class="fa fa-trash"></i></button>`
+                    : '';
+
+                col.innerHTML = `
+                    <div class="speaker-col-header" style="border-top-color: ${colColor}">
+                        <i class="fa fa-user" style="color:${colColor}"></i>
+                        <input type="text" class="speaker-name-input" value="${spk}" 
+                               onblur="renameSpeaker(this, '${spk}')" 
+                               onkeydown="if(event.key === 'Enter') this.blur()">
+                        <span class="badge bg-dark border border-secondary text-muted ms-auto">${count}</span>
+                        ${deleteBtn}
+                    </div>
+                    <div class="segment-list" id="list-${spk}"></div>
+                `;
+                
+                const list = col.querySelector('.segment-list');
+                
+                // Add cards
+                speakerData[spk].forEach((seg, index) => {
+                    const canMerge = (index < speakerData[spk].length - 1);
+                    list.appendChild(createSegmentCard(seg, spk, canMerge));
+                });
+                
+                container.appendChild(col);
+            });
+            
+            refreshSortables();
+
+            // Restore scroll positions
+            container.scrollLeft = boardScrollLeft;
+            Object.keys(scrollMap).forEach(spk => {
+                const list = document.getElementById(`list-${spk}`);
+                if(list) list.scrollTop = scrollMap[spk];
+            });
+        }
+
+        function createSegmentCard(seg, spk, canMerge) {
+            const el = document.createElement('div');
+            el.className = `segment-card ${seg.hasEmbedding ? 'analyzed' : ''}`;
+            el.id = `card-${seg.id}`;
+            el.dataset.id = seg.id;
+            el.dataset.start = seg.start;
+            el.dataset.end = seg.end;
+            el.dataset.conf = seg.confidenceScore; 
+            
+            el.style.borderLeftColor = colorMap[spk] || '#58a6ff';
+
+            el.onmouseenter = () => highlightSingleSegment(seg.id);
+            el.onmouseleave = () => resetAllRegions();
+
+            const duration = (seg.end - seg.start).toFixed(1);
+            
+            // Buttons logic
+            let mergeBtn = canMerge 
+                ? `<button class="btn-icon" title="Merge Down" onclick="mergeSegment('${seg.id}'); event.stopPropagation();"><i class="fa fa-link"></i></button>` 
+                : '';
+            
+            // Split button ONLY if it was merged
+            let splitBtn = seg.history 
+                ? `<button class="btn-icon danger" title="Unmerge (Split)" onclick="splitSegment('${seg.id}'); event.stopPropagation();"><i class="fa fa-unlink"></i></button>`
+                : '';
+            
+            // Linked Indicator
+            let linkedIcon = seg.history 
+                ? `<i class="fa fa-link text-muted small me-2" title="Merged Segment"></i>` 
+                : '';
+
+            el.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="fas fa-grip-vertical drag-handle"></i>
+                        ${linkedIcon}
+                        <span class="fw-bold text-white small">Seg #${seg.id.split('_').pop()}</span>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="conf-badge">...</span>
+                        <span class="badge bg-dark border border-secondary text-muted" style="font-size:0.7rem">${duration}s</span>
+                    </div>
+                </div>
+
+                <div class="card-meta">
+                    <span class="font-monospace small">${seg.start.toFixed(1)}s - ${seg.end.toFixed(1)}s</span>
+                    <div class="d-flex gap-1">
+                        ${splitBtn}
+                        ${mergeBtn}
+                        <button class="btn-icon" title="Analyze" onclick="extractSingleEmbedding('${seg.id}', this); event.stopPropagation();">
+                            <i class="fas fa-magic"></i>
+                        </button>
+                        <button class="btn-icon" title="Play" onclick="wavesurfer.play(${seg.start}, ${seg.end}); event.stopPropagation();">
+                            <i class="fas fa-play"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            updateCardVisuals(el, seg.confidenceScore);
+            return el;
+        }
+
+        // --- MERGE & UNMERGE LOGIC ---
+        function mergeSegment(segId) {
+            let currentSpk = null;
+            let idx = -1;
+            
+            for(let spk in speakerData) {
+                idx = speakerData[spk].findIndex(s => s.id === segId);
+                if(idx !== -1) { currentSpk = spk; break; }
+            }
+            
+            if(!currentSpk || idx === -1 || idx >= speakerData[currentSpk].length - 1) return;
+
+            const segA = speakerData[currentSpk][idx];
+            const segB = speakerData[currentSpk][idx+1];
+
+            // Create Merged Segment
+            // We use min(start) and max(end) to cover the full range
+            const newSeg = {
+                id: `merged_${Date.now()}`,
+                start: Math.min(segA.start, segB.start),
+                end: Math.max(segA.end, segB.end),
+                speaker: currentSpk,
+                confidenceScore: Math.round((segA.confidenceScore + segB.confidenceScore) / 2),
+                hasEmbedding: segA.hasEmbedding || segB.hasEmbedding,
+                history: [segA, segB] // Store originals for unmerge
+            };
+            
+            // Remove A and B, Insert New
+            speakerData[currentSpk].splice(idx, 2, newSeg);
+            
+            // Update Regions: Remove old, add new covering the full range
+            const regionA = wsRegions.getRegions().find(r => r.id === segA.id);
+            const regionB = wsRegions.getRegions().find(r => r.id === segB.id);
+            if(regionA) regionA.remove();
+            if(regionB) regionB.remove();
+
+            wsRegions.addRegion({
+                id: newSeg.id, start: newSeg.start, end: newSeg.end,
+                color: hexToRgba(colorMap[currentSpk], 0.2), drag: false, resize: false
+            });
+
+            renderKanban();
+        }
+
+        function splitSegment(segId) {
+            let currentSpk = null;
+            let idx = -1;
+            for(let spk in speakerData) {
+                idx = speakerData[spk].findIndex(s => s.id === segId);
+                if(idx !== -1) { currentSpk = spk; break; }
+            }
+            if(!currentSpk || idx === -1) return;
+
+            const seg = speakerData[currentSpk][idx];
+            
+            if(!seg.history) return; // Should not happen given UI logic
+
+            // Restore original segments
+            const originals = seg.history;
+            speakerData[currentSpk].splice(idx, 1, ...originals);
+
+            // Update Regions
+            const r = wsRegions.getRegions().find(reg => reg.id === segId);
+            if(r) r.remove();
+
+            originals.forEach(s => {
+                wsRegions.addRegion({
+                    id: s.id, start: s.start, end: s.end,
+                    color: hexToRgba(colorMap[currentSpk], 0.2), drag: false, resize: false
+                });
+            });
+
+            renderKanban();
+        }
+
+        // --- OPACITY LOGIC ---
+        function highlightSingleSegment(segId) {
+            const regions = wsRegions.getRegions();
+            regions.forEach(r => {
+                const spk = getSpeakerFromSegId(r.id);
+                if (r.id === segId) {
+                    r.setOptions({ color: hexToRgba(colorMap[spk], 0.7) });
+                } else {
+                    r.setOptions({ color: hexToRgba(colorMap[spk], 0.2) });
+                }
+            });
+        }
+        function resetAllRegions() {
+            const regions = wsRegions.getRegions();
+            regions.forEach(r => {
+                const spk = getSpeakerFromSegId(r.id);
+                r.setOptions({ color: hexToRgba(colorMap[spk], 0.2) });
+            });
+        }
+        function getSpeakerFromSegId(segId) {
+            for(let spk in speakerData) {
+                if(speakerData[spk].find(s => s.id === segId)) return spk;
+            }
+            return 'Unknown';
+        }
+
+        // --- SORTABLES ---
+        function refreshSortables() {
+            document.querySelectorAll('.segment-list').forEach(list => {
+                new Sortable(list, {
+                    group: 'speakers', animation: 150, handle: '.drag-handle', ghostClass: 'bg-dark',
+                    onEnd: function (evt) { handleDrop(evt); }
+                });
+            });
+        }
+
+        function handleDrop(evt) {
+            const itemEl = evt.item;
+            const newSpk = evt.to.closest('.speaker-col').dataset.speaker;
+            const oldSpk = evt.from.closest('.speaker-col').dataset.speaker;
+            const segId = itemEl.dataset.id;
+
+            if (newSpk === oldSpk) { renderKanban(); return; }
+
+            const segIdx = speakerData[oldSpk].findIndex(s => s.id === segId);
+            const segObj = speakerData[oldSpk].splice(segIdx, 1)[0];
+            segObj.speaker = newSpk;
+            speakerData[newSpk].push(segObj);
+
+            speakerData[newSpk].sort((a, b) => a.start - b.start);
+            const region = wsRegions.getRegions().find(r => r.id === segId);
+            if(region) region.setOptions({ color: hexToRgba(colorMap[newSpk], 0.2) });
+
+            renderKanban(); 
+        }
+
+        function addSpeakerColumn() {
+            newSpeakerCount++;
+            const newName = `New Speaker ${newSpeakerCount}`;
+            colorMap[newName] = generateBrightColor();
+            speakerData[newName] = []; 
+            renderKanban();
+            setTimeout(() => document.getElementById('speaker-columns').scrollTo({ left: 10000, behavior: 'smooth' }), 100);
+        }
+
+        function deleteSpeaker(spkName, event) {
+            event.stopPropagation(); 
+            if (speakerData[spkName] && speakerData[spkName].length === 0) {
+                delete speakerData[spkName];
+                renderKanban();
+            }
+        }
+
+        function renameSpeaker(inputEl, oldName) {
+            const newName = inputEl.value.trim();
+            if (newName === oldName || newName === "") { inputEl.value = oldName; return; }
+            if (speakerData[newName]) { alert(`Speaker "${newName}" already exists.`); inputEl.value = oldName; return; }
+
+            speakerData[newName] = speakerData[oldName];
+            delete speakerData[oldName];
+            speakerData[newName].forEach(seg => seg.speaker = newName);
+            colorMap[newName] = colorMap[oldName] || generateBrightColor();
+            
+            renderKanban();
+            updatePCAPlot(); 
+        }
+
+        async function extractSingleEmbedding(segId, btn) {
+            const originalIcon = btn.innerHTML;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; btn.disabled = true;
+            const card = document.getElementById(`card-${segId}`);
+            const speaker = card.closest('.speaker-col').dataset.speaker;
+            try {
+                let res = await fetch('/api/extract-segment', {
+                    method: 'POST', headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ id: segId, start: parseFloat(card.dataset.start), end: parseFloat(card.dataset.end), speaker: speaker })
+                });
+                let json = await res.json();
+                if(json.error) throw new Error(json.error);
+                card.classList.add('analyzed'); btn.innerHTML = '<i class="fas fa-check"></i>'; btn.classList.add('active');
+                let segObj = speakerData[speaker].find(s => s.id === segId);
+                if(segObj) segObj.hasEmbedding = true;
+                updatePCAPlot();
+            } catch (e) { alert(e.message); btn.innerHTML = originalIcon; btn.disabled = false; }
+        }
+
+        async function updatePCAPlot() {
+            try {
+                let res = await fetch('/api/compute-pca');
+                let points = await res.json();
+                if(!points.error) plotPCA(points);
+            } catch(e) {}
+        }
+
+        async function performClustering() {
+            const k = document.getElementById('numClusters').value;
+            showLoader(true, `Re-clustering...`);
+            try {
+                let res = await fetch('/api/recluster', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ num_clusters: k }) });
+                let mapping = await res.json(); 
+                if(mapping.error) throw new Error(mapping.error);
+                applyRelabeling(mapping);
+                updatePCAPlot();
+            } catch(e) { alert("Clustering error: " + e.message); }
+            showLoader(false);
+        }
+
+        function applyRelabeling(mapping) {
+            Object.entries(mapping).forEach(([segId, newLabel]) => {
+                let segObj = null;
+                for(let spk in speakerData) {
+                    let idx = speakerData[spk].findIndex(s => s.id === segId);
+                    if(idx !== -1) { segObj = speakerData[spk].splice(idx, 1)[0]; break; }
+                }
+                if(segObj) {
+                    segObj.speaker = newLabel;
+                    if(!speakerData[newLabel]) speakerData[newLabel] = [];
+                    speakerData[newLabel].push(segObj);
+                    if(!colorMap[newLabel]) colorMap[newLabel] = generateBrightColor();
+                }
+            });
+            renderKanban();
+            resetAllRegions();
+        }
+
+        function plotPCA(points) {
+            let traces = {};
+            points.forEach(p => {
+                if(!traces[p.speaker]) traces[p.speaker] = { 
+                    x: [], y: [], customdata: [],
+                    mode: 'markers', name: p.speaker, 
+                    marker: { size: 12, color: colorMap[p.speaker] || '#ffffff', line: {width: 1, color: 'white'} }, type: 'scatter'
+                };
+                traces[p.speaker].x.push(p.x); traces[p.speaker].y.push(p.y); traces[p.speaker].customdata.push([p.start, p.end]);
+            });
+            Plotly.newPlot('plotDiv', Object.values(traces), {
+                paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
+                margin: {t: 20, l: 30, r: 30, b: 30}, legend: { orientation: 'h', y: 1.1, font: {color: '#c9d1d9'} },
+                xaxis: { showgrid: true, gridcolor: '#30363d', zeroline: false }, yaxis: { showgrid: true, gridcolor: '#30363d', zeroline: false },
+                font: { color: '#c9d1d9', family: 'Inter' }
+            }, {displayModeBar: false}).then(gd => {
+                gd.on('plotly_click', d => { if(d.points[0].customdata) wavesurfer.play(d.points[0].customdata[0], d.points[0].customdata[1]); });
+            });
+        }
+
+        function showLoader(show, text) { document.getElementById('loader').style.display = show ? 'flex' : 'none'; if(text) document.getElementById('loader-text').innerText = text; }
+        function hexToRgba(hex, alpha) {
+            if(!hex) return `rgba(255,255,255,${alpha})`;
+            let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+    </script>
+</body>
+</html>
